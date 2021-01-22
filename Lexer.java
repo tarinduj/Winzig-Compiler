@@ -1,6 +1,5 @@
 import java.io.*;
 import java.util.Scanner;
-import java.lang.*;
 import java.util.ArrayList;
 
 public class Lexer{

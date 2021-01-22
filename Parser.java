@@ -1,4 +1,3 @@
-import java.io.*;
 import java.util.*; 
 
 public class Parser{
@@ -299,9 +298,18 @@ public class Parser{
                 read("case");
                 Expression();
                 read("of");
-                numChildren = 1;
-                numChildren += Caseclauses();
-                numChildren += OtherwiseClause();
+                Caseclause();         //since one or more required
+                read(";");
+                numChildren = 2;
+                while (peekNextToken().tokenType.toString().equals("<integer>") || peekNextToken().tokenType.toString().equals("<char>") || peekNextToken().tokenType.toString().equals("<identifier>")){
+                    Caseclause();
+                    read(";");
+                    numChildren++;
+                }
+                if (peekNextToken().tokenType.toString().equals("otherwise")){
+                    OtherwiseClause();
+                    numChildren++;
+                }
                 read("end");
                 buildTree("case", numChildren);
                 break;
@@ -356,16 +364,6 @@ public class Parser{
         read(TokenType.STRING);
     }
     
-    private int Caseclauses(){
-        int numChildren = 0;
-        while (peekNextToken().tokenType.toString().equals("<integer>") || peekNextToken().tokenType.toString().equals("<char>") || peekNextToken().tokenType.toString().equals("<identifier>")){
-            Caseclause();
-            read(";");
-            numChildren++;
-        }
-        return numChildren;
-    }
-
     private void Caseclause(){
         CaseExpression();
         int numChildren = 1;
@@ -389,15 +387,10 @@ public class Parser{
         }
     }
 
-    private int OtherwiseClause(){
-        if (peekNextToken().tokenType.toString().equals("otherwise")){
-            read("otherwise");
-            Statement();
-            buildTree("otherwise", 1);
-            return 1;
-        } else {
-            return 0;
-        }
+    private void OtherwiseClause(){
+        read("otherwise");
+        Statement();
+        buildTree("otherwise", 1);
     }
 
     private void Assignment(){
@@ -418,12 +411,13 @@ public class Parser{
 
     private void ForStat(){
         switch (peekNextToken().tokenType.toString()){
-            case ";":
-                buildTree("<null>",0);
+            case "<identifier>":
+                Assignment();
                 break;
 
             default:
-                Assignment();
+                buildTree("<null>",0);
+                
         }
     }
 
