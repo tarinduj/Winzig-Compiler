@@ -11,6 +11,10 @@ public class CodeGenerator{
         AttributeNode attrRoot = getAttributeNode(ast.root); 
         attrTree = new AttributeTree(attrRoot);
         synthesizeAttributes(attrRoot);
+        System.out.println("Assembly files generated successfully.");
+
+        File file = new File("asm.temp"); 
+        if(file.delete()){ System.out.println("Temporary files deleted successfully.");} 
     }
 
     public AttributeNode getAttributeNode(Node ASTNode) {
@@ -93,6 +97,35 @@ public class CodeGenerator{
 
                     node.synthesizedAttr.code = closeFile(gen(child6.synthesizedAttr.code, "stop"));  
                     break;
+                                   
+                case "var":
+                    node.synthesizedAttr.code = node.inhertitedAttr.code;  
+                    node.synthesizedAttr.next = node.inhertitedAttr.next;   
+                    node.synthesizedAttr.top = node.inhertitedAttr.top; 
+                    break;
+                
+                case "assign":
+                    child1 = node.lefChild; //<identifier>
+                    child2 = child1.rightSibling; //Expression
+                    x = child1.lefChild.value;
+                    
+                    child2.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    child2.inhertitedAttr.next = node.inhertitedAttr.next; 
+                    child2.inhertitedAttr.top = node.inhertitedAttr.top; 
+                    synthesizeAttributes(child2); 
+
+                    if (decTable.lookup(x) == 0){
+                        decTable.enter(x, child2.synthesizedAttr.top);
+                        node.synthesizedAttr.code = child2.synthesizedAttr.code;
+                        node.synthesizedAttr.next = child2.synthesizedAttr.next;
+                        node.synthesizedAttr.top = child2.synthesizedAttr.top;
+                    } else {
+                        node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "save", Integer.toString(decTable.lookup(x)));
+                        node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
+                        node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
+                    }
+
+                    break; 
 
                 case "consts": //deafaults
                     if (node.numChildren == 0){
@@ -120,7 +153,7 @@ public class CodeGenerator{
                         node.synthesizedAttr.next = prevChild.synthesizedAttr.next;   
                         node.synthesizedAttr.top = prevChild.synthesizedAttr.top;  
                     }  
-                    break;   
+                    break;  
 
                 case "types": //defaults
                     if (node.numChildren == 0){
@@ -227,36 +260,80 @@ public class CodeGenerator{
                     node.synthesizedAttr.next = prevChild.synthesizedAttr.next;   
                     node.synthesizedAttr.top = prevChild.synthesizedAttr.top;     
                     break; 
+
+                case "output":
+                    currChild = node.lefChild;
+                    currChild.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    currChild.inhertitedAttr.next = node.inhertitedAttr.next;   
+                    currChild.inhertitedAttr.top = node.inhertitedAttr.top;   
+                    synthesizeAttributes(currChild); 
+                    prevChild = currChild;
+
+                    for (int i = 1; i < node.numChildren; i++) {
+                        System.out.println(i);
+                        currChild = currChild.rightSibling;
+                        currChild.inhertitedAttr.code = gen(prevChild.synthesizedAttr.code, "print");  
+                        currChild.inhertitedAttr.next = prevChild.synthesizedAttr.next + 1;   
+                        currChild.inhertitedAttr.top = prevChild.synthesizedAttr.top - 1; 
+                        synthesizeAttributes(currChild);    
+                        prevChild = currChild;
+                    } 
                 
-                case "var":
-                    node.synthesizedAttr.code = node.inhertitedAttr.code;  
-                    node.synthesizedAttr.next = node.inhertitedAttr.next;   
-                    node.synthesizedAttr.top = node.inhertitedAttr.top; 
-                    break;
+                    node.synthesizedAttr.code = gen(prevChild.synthesizedAttr.code, "print"); 
+                    node.synthesizedAttr.next = prevChild.synthesizedAttr.next + 1;   
+                    node.synthesizedAttr.top = prevChild.synthesizedAttr.top - 1;     
+                    break;  
+                
+                case "if":
+                    if (node.numChildren == 3){
+                        child1 = node.lefChild; 
+                        child2 = child1.rightSibling; 
+                        child3 = child2.rightSibling;
 
-                case "assign":
-                    child1 = node.lefChild; //<identifier>
-                    child2 = child1.rightSibling; //Expression
-                    x = child1.lefChild.value;
-                    
-                    child2.inhertitedAttr.code = node.inhertitedAttr.code;  
-                    child2.inhertitedAttr.next = node.inhertitedAttr.next; 
-                    child2.inhertitedAttr.top = node.inhertitedAttr.top; 
-                    synthesizeAttributes(child2); 
+                        child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                        child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                        child1.inhertitedAttr.top = node.inhertitedAttr.top;  
+                        synthesizeAttributes(child1);  
 
-                    if (decTable.lookup(x) == 0){
-                        decTable.enter(x, child2.synthesizedAttr.top);
+                        child2.inhertitedAttr.code = gen(temp, "iffalse", Integer.toString(child2.synthesizedAttr.next + 1));
+                        child2.inhertitedAttr.next = child1.synthesizedAttr.next + 1;   
+                        child2.inhertitedAttr.top = child1.synthesizedAttr.top - 1; 
+                        synthesizeAttributes(child2);  
+                        child2.inhertitedAttr.code = gen(child1.synthesizedAttr.code, "iffalse", Integer.toString(child2.synthesizedAttr.next + 1));
+                        synthesizeAttributes(child2);  
+
+                        child3.inhertitedAttr.code = gen(temp, "goto", Integer.toString(child3.synthesizedAttr.next));
+                        child3.inhertitedAttr.next = child2.synthesizedAttr.next + 1;   
+                        child3.inhertitedAttr.top = child2.synthesizedAttr.top; 
+                        synthesizeAttributes(child3);  
+                        child3.inhertitedAttr.code = gen(child2.synthesizedAttr.code, "goto", Integer.toString(child3.synthesizedAttr.next));
+                        synthesizeAttributes(child3);  
+                        
+                        node.synthesizedAttr.code = child3.synthesizedAttr.code;
+                        node.synthesizedAttr.next = child3.synthesizedAttr.next;
+                        node.synthesizedAttr.top = child3.synthesizedAttr.top;
+                    } else {
+                        child1 = node.lefChild; 
+                        child2 = child1.rightSibling; 
+
+                        child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                        child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                        child1.inhertitedAttr.top = node.inhertitedAttr.top;  
+                        synthesizeAttributes(child1);  
+
+                        child2.inhertitedAttr.code = gen(temp, "iffalse", Integer.toString(child2.synthesizedAttr.next));
+                        child2.inhertitedAttr.next = child1.synthesizedAttr.next + 1;   
+                        child2.inhertitedAttr.top = child1.synthesizedAttr.top - 1; 
+                        synthesizeAttributes(child2);  
+                        child2.inhertitedAttr.code = gen(child1.synthesizedAttr.code, "iffalse", Integer.toString(child2.synthesizedAttr.next));
+                        synthesizeAttributes(child2);  
+
                         node.synthesizedAttr.code = child2.synthesizedAttr.code;
                         node.synthesizedAttr.next = child2.synthesizedAttr.next;
                         node.synthesizedAttr.top = child2.synthesizedAttr.top;
-                    } else {
-                        node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "save", Integer.toString(decTable.lookup(x)));
-                        node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
-                        node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
                     }
-
                     break;
-                
+
                 case "while":
                     child1 = node.lefChild; 
                     child2 = child1.rightSibling; 
@@ -276,19 +353,6 @@ public class CodeGenerator{
                     node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "goto", Integer.toString(node.inhertitedAttr.next));
                     node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
                     node.synthesizedAttr.top = child2.synthesizedAttr.top;
-                    break;
-
-                case "not":
-                    child1 = node.lefChild;
-
-                    child1.inhertitedAttr.code = node.inhertitedAttr.code;  
-                    child1.inhertitedAttr.next = node.inhertitedAttr.next;   
-                    child1.inhertitedAttr.top = node.inhertitedAttr.top;   
-                    synthesizeAttributes(child1);  
-
-                    node.synthesizedAttr.code = gen(child1.synthesizedAttr.code, "not");
-                    node.synthesizedAttr.next = child1.synthesizedAttr.next + 1;   
-                    node.synthesizedAttr.top = child1.synthesizedAttr.top; 
                     break;
 
                 case "=":
@@ -329,29 +393,83 @@ public class CodeGenerator{
                     node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
                     node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
                     break;
-                
-                case "output":
-                    currChild = node.lefChild;
-                    currChild.inhertitedAttr.code = node.inhertitedAttr.code;  
-                    currChild.inhertitedAttr.next = node.inhertitedAttr.next;   
-                    currChild.inhertitedAttr.top = node.inhertitedAttr.top;   
-                    synthesizeAttributes(currChild); 
-                    prevChild = currChild;
 
-                    for (int i = 1; i < node.numChildren; i++) {
-                        System.out.println(i);
-                        currChild = currChild.rightSibling;
-                        currChild.inhertitedAttr.code = gen(prevChild.synthesizedAttr.code, "print");  
-                        currChild.inhertitedAttr.next = prevChild.synthesizedAttr.next + 1;   
-                        currChild.inhertitedAttr.top = prevChild.synthesizedAttr.top - 1; 
-                        synthesizeAttributes(currChild);    
-                        prevChild = currChild;
-                    } 
+                case "-":
+                    child1 = node.lefChild;
+
+                    child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                    child1.inhertitedAttr.top = node.inhertitedAttr.top;   
+                    synthesizeAttributes(child1);  
+
+                    if (node.numChildren == 1){
+                        node.synthesizedAttr.code = gen(child1.synthesizedAttr.code, "negate");
+                        node.synthesizedAttr.next = child1.synthesizedAttr.next + 1;   
+                        node.synthesizedAttr.top = child1.synthesizedAttr.top; 
+                    } else {
+                        child2 = child1.rightSibling;
+                        
+                        child2.inhertitedAttr.code = child1.synthesizedAttr.code;  
+                        child2.inhertitedAttr.next = child1.synthesizedAttr.next;   
+                        child2.inhertitedAttr.top = child1.synthesizedAttr.top; 
+                        synthesizeAttributes(child2); 
+                        
+                        node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "subtract");
+                        node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
+                        node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
+                    }
+                    break;
                 
-                    node.synthesizedAttr.code = gen(prevChild.synthesizedAttr.code, "print"); 
-                    node.synthesizedAttr.next = prevChild.synthesizedAttr.next + 1;   
-                    node.synthesizedAttr.top = prevChild.synthesizedAttr.top - 1;     
-                    break;  
+                case "*":
+                    child1 = node.lefChild; 
+                    child2 = child1.rightSibling;
+
+                    child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                    child1.inhertitedAttr.top = node.inhertitedAttr.top;   
+                    synthesizeAttributes(child1);  
+
+                    child2.inhertitedAttr.code = child1.synthesizedAttr.code;  
+                    child2.inhertitedAttr.next = child1.synthesizedAttr.next;   
+                    child2.inhertitedAttr.top = child1.synthesizedAttr.top; 
+                    synthesizeAttributes(child2);  
+
+                    node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "mul");
+                    node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
+                    node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
+                    break;
+
+                case "/":
+                    child1 = node.lefChild; 
+                    child2 = child1.rightSibling;
+
+                    child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                    child1.inhertitedAttr.top = node.inhertitedAttr.top;   
+                    synthesizeAttributes(child1);  
+
+                    child2.inhertitedAttr.code = child1.synthesizedAttr.code;  
+                    child2.inhertitedAttr.next = child1.synthesizedAttr.next;   
+                    child2.inhertitedAttr.top = child1.synthesizedAttr.top; 
+                    synthesizeAttributes(child2);  
+
+                    node.synthesizedAttr.code = gen(child2.synthesizedAttr.code, "mul");
+                    node.synthesizedAttr.next = child2.synthesizedAttr.next + 1;
+                    node.synthesizedAttr.top = child2.synthesizedAttr.top - 1;
+                    break;
+
+                case "not":
+                    child1 = node.lefChild;
+
+                    child1.inhertitedAttr.code = node.inhertitedAttr.code;  
+                    child1.inhertitedAttr.next = node.inhertitedAttr.next;   
+                    child1.inhertitedAttr.top = node.inhertitedAttr.top;   
+                    synthesizeAttributes(child1);  
+
+                    node.synthesizedAttr.code = gen(child1.synthesizedAttr.code, "not");
+                    node.synthesizedAttr.next = child1.synthesizedAttr.next + 1;   
+                    node.synthesizedAttr.top = child1.synthesizedAttr.top; 
+                    break;
                 
                 case "integer":
                     child1 = node.lefChild; 

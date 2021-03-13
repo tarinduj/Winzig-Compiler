@@ -1,4 +1,4 @@
-#BUILDING THE PARSER
+#BUILDING THE COMPILER
 
 Use the make file to build the compiler.
 
@@ -9,14 +9,21 @@ Use clean option delete your build files.
 	$ make clean
 
 
-#USING THE PARSER
+#USING THE COMPILER
 
-Use the following code to use the parser.
+Use the following code to use the compiler.
 
 	$ java winzig <option> <source path>
 
-	<option> 	-> "-ast"    (prints the AST to terminal)
-	 			-> "-tokens" (prints the screened token to the terminal)
+	<option> 	-> "-ast"       (prints the AST to terminal)
+                -> "-code"      (creates the machine code as 'asmfile' in the current directory)
+	 			-> "-tokens"    (prints the screened token to the terminal)
+
+
+#USING AST VISUALIZER
+
+Open the AST Visualizer using IPython.
+Give any AST created using the above -ast option as the input to visualize it.
 
 
 #TESTING THE PARSER

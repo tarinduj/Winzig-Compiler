@@ -17,3 +17,4 @@ run: $(MAIN).class
 clean:
 	$(RM) *.class
 	$(RM) tree.*
+	$(RM) asmfile

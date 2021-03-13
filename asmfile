@@ -8,7 +8,7 @@ load 1
 print 
 load 1 
 lit 1 
-add 
+mul 
 save 1 
 goto 2 
 stop 
