@@ -12,11 +12,15 @@ Use clean option delete your build files.
 
 Use the following code to use the compiler.
 
-	$ java winzig <option> <source path>
+	$ java winzigc <option> <source path>
 
 	<option> 	-> "-ast"       (prints the AST to terminal)
                 	-> "-code"      (creates the machine code as 'asmfile' in the current directory)
 	 		-> "-tokens"    (prints the screened token to the terminal)
+
+Working Example Code:
+
+    $ java winzigc -code test
 
 
 #### USING AST VISUALIZER
