@@ -6,6 +6,7 @@ public class winzigc{
         
         Lexer lexer = new Lexer();
         Parser parser  = new Parser();
+        CodeGenerator codegen = new CodeGenerator();
 
         try{
             String flag = args[0];
@@ -22,8 +23,10 @@ public class winzigc{
                 } else if (flag.equals("-ast")){
                     AST ast = parser.getAST(screenedTokens);
                     ast.traverseTree(ast.root, 0);
+                } else if (flag.equals("-code")){
+                    AST ast = parser.getAST(screenedTokens);
+                    codegen.generateCode(ast);
                 }
-                
             }
             catch(IOException e) {
                 System.out.println("Invalid File!");
