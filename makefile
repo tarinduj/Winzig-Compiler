@@ -18,3 +18,4 @@ clean:
 	$(RM) *.class
 	$(RM) tree.*
 	$(RM) asmfile
+	$(RM) errorfile
