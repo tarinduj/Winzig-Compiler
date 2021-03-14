@@ -6,11 +6,10 @@ var i : integer;
 
 begin
 	i := 1;
-    while not (i=11) do 
+    while not (11) do 
 	begin
 		output (i);
 		i := i + 1
 		end
 
-end test.
-
+end nottest.

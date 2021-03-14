@@ -15,8 +15,8 @@ Use the following code to use the compiler.
 	$ java winzigc <option> <source path>
 
 	<option> 	-> "-ast"       (prints the AST to terminal)
-                	-> "-code"      (creates the machine code as 'asmfile' in the current directory)
-	 		-> "-tokens"    (prints the screened token to the terminal)
+                -> "-code"      (creates the machine code as 'asmfile' in the current directory)
+	 		    -> "-tokens"    (prints the screened tokens to the terminal)
 
 Working Example Code:
 
@@ -36,7 +36,7 @@ You can dump the AST and use diff to evaluate the parser like follows.
 	$ java winzigc –ast <source path> > <output tree>
  	$ diff <output tree> <source path>
 
-Here is a list of commands to test the provided test cases.
+Here is a list of commands to test the ASTs using provided test cases.
 
     java winzigc -ast winzig_test_programs/winzig_01 > tree.01
     diff tree.01 winzig_test_programs/winzig_01.tree
