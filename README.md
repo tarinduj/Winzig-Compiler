@@ -14,9 +14,9 @@ Use the following code to use the compiler.
 
 	$ java winzigc <option> <source path>
 
-	<option> 	-> "-ast"       (prints the AST to terminal)
-                -> "-code"      (creates the machine code as 'asmfile' in the current directory)
-	 		    -> "-tokens"    (prints the screened tokens to the terminal)
+	<option>	-> "-ast"       (prints the AST to terminal)
+			-> "-code"      (creates the machine code as 'asmfile' in the current directory)
+			-> "-tokens"    (prints the screened tokens to the terminal)
 
 Working Example Code:
 
